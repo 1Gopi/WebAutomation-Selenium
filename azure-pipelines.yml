@@ -1,0 +1,54 @@
+trigger:
+  - main # Trigger pipeline on changes to the main branch
+
+pool:
+  vmImage: 'windows-latest' # Use a Windows agent (or 'ubuntu-latest' for Linux)
+
+variables:
+  MAVEN_OPTS: "-Xmx1024m"
+
+steps:
+# Step 1: Checkout Code
+- task: Checkout@1
+
+# Step 2: Set up Maven
+- task: Maven@3
+  inputs:
+    mavenPomFile: 'pom.xml' # Path to your Maven POM file
+    mavenOptions: '-Xmx1024m'
+    javaHomeOption: 'JDKVersion'
+    jdkVersion: '11'
+    jdkArchitecture: 'x64'
+    goals: 'mvn clean test'
+
+# Step 3: Publish TestNG Results (Optional if you want test results in Azure)
+- task: PublishTestResults@2
+  inputs:
+    testResultsFiles: '**/test-output/testng-results.xml'
+    testRunTitle: 'TestNG Test Results'
+
+# Step 4: Archive ExtentReports
+- task: PublishBuildArtifacts@1
+  inputs:
+    pathToPublish: 'test-output/ExtentReports' # Path to ExtentReports directory
+    artifactName: 'ExtentReports'
+
+# Step 5: Email ExtentReports to the Customer
+- task: PowerShell@2
+  inputs:
+    targetType: 'inline'
+    script: |
+      $EmailFrom = "your_email@example.com"
+      $EmailTo = "customer_email@example.com"
+      $Subject = "Test Automation Report"
+      $Body = "Please find the attached test automation report."
+      $SMTPServer = "smtp.yourserver.com"
+      $SMTPPort = 587
+      $SMTPUser = "your_email@example.com"
+      $SMTPPass = "your_password"
+      
+      # Attach report
+      $Attachment = "$(Build.ArtifactStagingDirectory)\ExtentReports\report.html"
+
+      # Send email
+      Send-MailMessage -From $EmailFrom -To $EmailTo -Subject $Subject -Body $Body -SmtpServer $SMTPServer -Port $SMTPPort -UseSsl -Credential (New-Object PSCredential -ArgumentList $SMTPUser, (ConvertTo-SecureString -String $SMTPPass -AsPlainText -Force)) -Attachments $Attachment
