@@ -38,8 +38,8 @@ steps:
   inputs:
     targetType: 'inline'
     script: |
-      $EmailFrom = "your_email@example.com"
-      $EmailTo = "customer_email@example.com"
+      $EmailFrom = "gopim6056@gmail.com"
+      $EmailTo = "gopim9595@gmail.com"
       $Subject = "Test Automation Report"
       $Body = "Please find the attached test automation report."
       $SMTPServer = "smtp.yourserver.com"
